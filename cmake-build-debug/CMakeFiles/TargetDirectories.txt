@@ -1,0 +1,3 @@
+/Users/deyu/CLionProjects/gtpv2-utrans/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/Users/deyu/CLionProjects/gtpv2-utrans/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/deyu/CLionProjects/gtpv2-utrans/cmake-build-debug/CMakeFiles/gtpv2_utrans.dir
