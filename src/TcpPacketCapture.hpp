@@ -18,7 +18,26 @@
 
 #pragma pack(1)
 
-typedef int (*ON_PACKET_LISTENER) (int len, const u_char*) ;
+
+typedef struct __TCP_PACKET{
+    u_char* SrcIP;
+    u_char* DstIP;
+
+    pk_big_uint16 SrcPort;
+    pk_big_uint16 DstPort;
+
+
+    ether_header* EtherHeader;
+    PInernetProtocol InternetProtocol;
+    PTCP TcpHeader;
+    size_t TcpHeaderLen;
+
+    u_char* TcpPayload;
+    size_t TcpPayloadLen;
+} TCP_PACKET, *PTCP_PACKET;
+
+typedef int (*ON_PACKET_LISTENER) (PTCP_PACKET packet) ;
+
 
 class TcpPacketCapture {
 private:
@@ -43,8 +62,8 @@ public:
 
         sprintf(filterExp, "%d.%d.%d.%d\n", ipBytes[3], ipBytes[2], ipBytes[1], ipBytes[0]);
         char error[128];
-        /* 打开设备 */
-        if (!(deviceHandle = pcap_open_live(devName,   // 设备名
+
+        if (!(deviceHandle = pcap_open_live(devName,         // 设备名
                                            65536,            // 要捕捉的数据包的部分
                                            true,             // 混杂模式
                                            1000,             // 读取超时时间
@@ -115,6 +134,21 @@ public:
             Util::printHEX(tcpPayload, tcpPayloadLength);
 
             printf("\n\n");
+
+            TCP_PACKET tcpPacket{
+                .DstPort = tcp->DstPort,
+                .SrcPort = tcp->SrcPort,
+                .DstIP = protocol->DstIP,
+                .SrcIP = protocol->SrcIP,
+                .EtherHeader = eth_header,
+                .InternetProtocol = protocol,
+                .TcpHeaderLen = tcpHeaderLength,
+                .TcpHeader = tcp,
+                .TcpPayload = tcpPayload,
+                .TcpPayloadLen = tcpHeaderLength
+            };
+
+            listener(&tcpPacket);
         }
     }
 
