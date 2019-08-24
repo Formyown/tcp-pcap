@@ -43,24 +43,15 @@ class TcpPacketCapture {
 private:
     u_int listenIp = 0;
     char* devName = nullptr;
-    char filterExp[32];
+    char filterExp[128];
     pcap_t* deviceHandle;
     bool startState = false;
-
+    struct bpf_program filter;
 
 public:
-    TcpPacketCapture(char* devName, uint32_t listenIp){
+    TcpPacketCapture(char* devName, char* listenIp){
         this->devName = devName;
-        this->listenIp = listenIp;
 
-
-        unsigned char ipBytes[4];
-        ipBytes[0] = listenIp & 0xFF;
-        ipBytes[1] = (listenIp >> 8) & 0xFF;
-        ipBytes[2] = (listenIp >> 16) & 0xFF;
-        ipBytes[3] = (listenIp >> 24) & 0xFF;
-
-        sprintf(filterExp, "%d.%d.%d.%d\n", ipBytes[3], ipBytes[2], ipBytes[1], ipBytes[0]);
         char error[128];
 
         if (!(deviceHandle = pcap_open_live(devName,         // 设备名
@@ -70,7 +61,12 @@ public:
                                            error             // 错误缓冲池
             )))
             fprintf(stderr, "Couldn't open device %s: %s\n", "en0", error);
-        printf("INIT SUCCESSFUL");
+        sprintf(this->filterExp, "ip %s", listenIp);
+
+        if (pcap_compile(deviceHandle, &filter, filterExp, 0, 0) == -1) {
+            printf("Bad filter - %s\n", pcap_geterr(handle));
+            return 2;
+        }
     }
 
     void StartListen(ON_PACKET_LISTENER listener){
